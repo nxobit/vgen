@@ -1,0 +1,98 @@
+[package]
+name = "vgen"
+version = "0.3.0"
+edition = "2021"
+rust-version = "1.92"
+authors = ["oritwoen"]
+description = "Bitcoin vanity address generator with regex pattern matching and GPU acceleration"
+license = "MIT"
+repository = "https://github.com/oritwoen/vgen"
+keywords = ["bitcoin", "vanity", "address", "gpu", "secp256k1"]
+categories = ["cryptography", "command-line-utilities"]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cast_possible_truncation = "allow"
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+unreadable_literal = "allow"
+struct_field_names = "allow"
+uninlined_format_args = "allow"
+use_self = "allow"
+doc_markdown = "allow"
+missing_const_for_fn = "allow"
+too_many_lines = "allow"
+fn_params_excessive_bools = "allow"
+option_if_let_else = "allow"
+similar_names = "allow"
+
+[dependencies]
+# GPU Compute
+wgpu = { version = "28", default-features = false, features = ["std", "parking_lot", "metal", "gles", "vulkan", "wgsl"] }
+pollster = "0.4"
+bytemuck = { version = "1.19", features = ["derive"] }
+
+# Crypto
+bitcoin = { version = "0.32", features = ["rand", "secp-recovery"] }
+sha3 = "0.10"
+hex = "0.4"
+
+# Puzzle data
+boha = "0.11"
+
+# Pattern Matching
+regex = "1.11"
+
+# CLI / IO
+clap = { version = "4", features = ["derive"] }
+indicatif = "0.17"
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+ctrlc = "3.4"
+
+# TUI
+crossterm = "0.28"
+ratatui = "0.29"
+
+# Parallelism
+rayon = "1.10"
+tokio = { version = "1.42", features = ["rt", "sync"] }
+
+# Utils
+rand = { version = "0.8", features = ["small_rng"] }
+num-bigint = "0.4"
+num-traits = "0.2"
+env_logger = "0.11"
+
+[dev-dependencies]
+sha2 = "0.10"
+criterion = "0.5"
+
+[[bin]]
+name = "vgen"
+path = "src/main.rs"
+
+[[bench]]
+name = "core_bench"
+harness = false
+
+[[bench]]
+name = "gpu_bench"
+harness = false
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
