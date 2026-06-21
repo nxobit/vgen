@@ -308,6 +308,26 @@ impl GpuRunner {
             source: wgpu::ShaderSource::Wgsl(Cow::Owned(search_source)),
         });
 
+        let mut jacobian_source = String::from(field_source);
+        jacobian_source.push('\n');
+        jacobian_source.push_str(include_str!("shaders/compute_jacobian.wgsl"));
+        let jacobian_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("Compute Jacobian Shader"),
+            source: wgpu::ShaderSource::Wgsl(Cow::Owned(jacobian_source)),
+        });
+
+        let mut btcc_source = String::from(field_source);
+        btcc_source.push('\n');
+        btcc_source.push_str(include_str!("shaders/sha256.wgsl"));
+        btcc_source.push('\n');
+        btcc_source.push_str(include_str!("shaders/ripemd160.wgsl"));
+        btcc_source.push('\n');
+        btcc_source.push_str(include_str!("shaders/search_btcc.wgsl"));
+        let btcc_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("BTCC Match Shader"),
+            source: wgpu::ShaderSource::Wgsl(Cow::Owned(btcc_source)),
+        });
+
         let mut p2tr_source = String::from(field_source);
         p2tr_source.push('\n');
         p2tr_source.push_str(include_str!("shaders/search_p2tr.wgsl"));
@@ -405,7 +425,7 @@ impl GpuRunner {
             device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
                 label: Some("Compute Jacobian Pipeline"),
                 layout: Some(&pipeline_layout),
-                module: &search_shader,
+                module: &jacobian_shader,
                 entry_point: Some("compute_jacobian"),
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
                 cache: None,
@@ -415,7 +435,7 @@ impl GpuRunner {
             device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
                 label: Some("Batch Normalize BTCC Match Pipeline"),
                 layout: Some(&pipeline_layout),
-                module: &search_shader,
+                module: &btcc_shader,
                 entry_point: Some("batch_normalize_btcc_match"),
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
                 cache: None,
