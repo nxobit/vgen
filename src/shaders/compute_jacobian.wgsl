@@ -1,4 +1,4 @@
-@compute @workgroup_size(256)
+@compute @workgroup_size(64)
 fn compute_jacobian(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let idx = global_id.x;
     if (idx >= config.num_keys) { return; }

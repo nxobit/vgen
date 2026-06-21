@@ -81,6 +81,7 @@ pub(crate) fn is_software_adapter(info: &wgpu::AdapterInfo) -> bool {
 
 // Default batch size (can be overridden by config)
 pub const DEFAULT_BATCH_SIZE: u32 = 512 * 1024; // 512K
+const BTCC_WORKGROUP_SIZE: u32 = 64;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -835,7 +836,7 @@ impl GpuRunner {
                 label: Some("P2TR Search Encoder"),
             });
 
-        let workgroups = self.batch_size.div_ceil(256);
+        let workgroups = self.batch_size.div_ceil(BTCC_WORKGROUP_SIZE);
 
         // Step 1: Compute Jacobian points (using P2TR shader, no SHA/RIPEMD)
         {
@@ -978,7 +979,7 @@ impl GpuRunner {
                 label: Some("Batch Hash Search Encoder"),
             });
 
-        let workgroups = self.batch_size.div_ceil(256);
+        let workgroups = self.batch_size.div_ceil(BTCC_WORKGROUP_SIZE);
 
         // Step 1: Compute Jacobian points
         {

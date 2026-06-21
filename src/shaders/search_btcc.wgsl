@@ -1,5 +1,5 @@
-var<workgroup> prefix: array<array<u32, 8>, 256>;
-var<workgroup> suffix: array<array<u32, 8>, 256>;
+var<workgroup> prefix: array<array<u32, 8>, 64>;
+var<workgroup> suffix: array<array<u32, 8>, 64>;
 var<workgroup> inv_total_shared: array<u32, 8>;
 
 fn pattern_char(chunks: array<vec4<u32>, 11>, index: u32) -> u32 {
@@ -112,7 +112,7 @@ fn match_btcc_address(chars: array<u32, 42>) -> bool {
     return true;
 }
 
-@compute @workgroup_size(256)
+@compute @workgroup_size(64)
 fn batch_normalize_btcc_match(@builtin(global_invocation_id) gid: vec3<u32>,
                               @builtin(local_invocation_id) lid: vec3<u32>) {
     let local_idx = lid.x;
@@ -128,7 +128,7 @@ fn batch_normalize_btcc_match(@builtin(global_invocation_id) gid: vec3<u32>,
     suffix[local_idx] = z_val;
     workgroupBarrier();
 
-    for (var stride = 1u; stride < 256u; stride = stride * 2u) {
+    for (var stride = 1u; stride < 64u; stride = stride * 2u) {
         var val = prefix[local_idx];
         if (local_idx >= stride) {
             val = fe_mul(prefix[local_idx - stride], val);
@@ -138,9 +138,9 @@ fn batch_normalize_btcc_match(@builtin(global_invocation_id) gid: vec3<u32>,
         workgroupBarrier();
     }
 
-    for (var stride = 1u; stride < 256u; stride = stride * 2u) {
+    for (var stride = 1u; stride < 64u; stride = stride * 2u) {
         var val = suffix[local_idx];
-        if (local_idx + stride < 256u) {
+        if (local_idx + stride < 64u) {
             val = fe_mul(val, suffix[local_idx + stride]);
         }
         workgroupBarrier();
@@ -149,7 +149,7 @@ fn batch_normalize_btcc_match(@builtin(global_invocation_id) gid: vec3<u32>,
     }
 
     if (local_idx == 0u) {
-        let total = prefix[255];
+        let total = prefix[63];
         if (fe_is_zero(total)) {
             inv_total_shared = fe_one();
         } else {
@@ -162,8 +162,8 @@ fn batch_normalize_btcc_match(@builtin(global_invocation_id) gid: vec3<u32>,
     var z_inv: array<u32, 8>;
     if (local_idx == 0u) {
         z_inv = fe_mul(inv_total, suffix[1]);
-    } else if (local_idx == 255u) {
-        z_inv = fe_mul(prefix[254], inv_total);
+    } else if (local_idx == 63u) {
+        z_inv = fe_mul(prefix[62], inv_total);
     } else {
         let tmp = fe_mul(prefix[local_idx - 1u], inv_total);
         z_inv = fe_mul(tmp, suffix[local_idx + 1u]);
