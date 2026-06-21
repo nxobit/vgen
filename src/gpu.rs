@@ -309,7 +309,8 @@ impl GpuRunner {
             source: wgpu::ShaderSource::Wgsl(Cow::Owned(search_source)),
         });
 
-        let mut jacobian_source = String::from(field_source);
+        let mut jacobian_source = String::new();
+        jacobian_source.push_str(include_str!("shaders/field_jacobian.wgsl"));
         jacobian_source.push('\n');
         jacobian_source.push_str(include_str!("shaders/compute_jacobian.wgsl"));
         let jacobian_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
