@@ -140,8 +140,6 @@ fn fe_mul(a: array<u32, 8>, b: array<u32, 8>) -> array<u32, 8> {
 
 fn fe_square(a: array<u32, 8>) -> array<u32, 8> { return fe_mul(a, a); }
 fn fe_one() -> array<u32, 8> { return array<u32, 8>(1u, 0u, 0u, 0u, 0u, 0u, 0u, 0u); }
-fn fe_zero() -> array<u32, 8> { return array<u32, 8>(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u); }
-
 fn fe_is_zero(a: array<u32, 8>) -> bool {
     for (var i = 0u; i < 8u; i++) { if (a[i] != 0u) { return false; } }
     return true;
@@ -160,43 +158,7 @@ struct AffinePoint {
     y: array<u32, 8>
 }
 
-fn jac_is_infinity(p: JacobianPoint) -> bool { return fe_is_zero(p.z); }
-fn jac_infinity() -> JacobianPoint {
-    var p: JacobianPoint;
-    p.x = fe_one();
-    p.y = fe_one();
-    p.z = fe_zero();
-    return p;
-}
-
-fn jac_double(p: JacobianPoint) -> JacobianPoint {
-    if (jac_is_infinity(p)) { return p; }
-    let a = fe_square(p.x);
-    let b = fe_square(p.y);
-    let c = fe_square(b);
-    let xpb = fe_add(p.x, b);
-    let xpb2 = fe_square(xpb);
-    let d = fe_double(fe_sub(fe_sub(xpb2, a), c));
-    let e = fe_add(fe_add(a, a), a);
-    let f = fe_square(e);
-    let x3 = fe_sub(f, fe_double(d));
-    let y3 = fe_sub(fe_mul(e, fe_sub(d, x3)), fe_double(fe_double(fe_double(c))));
-    let z3 = fe_double(fe_mul(p.y, p.z));
-    var res: JacobianPoint;
-    res.x = x3;
-    res.y = y3;
-    res.z = z3;
-    return res;
-}
-
 fn jac_add_affine(p: JacobianPoint, q: AffinePoint) -> JacobianPoint {
-    if (jac_is_infinity(p)) {
-        var res: JacobianPoint;
-        res.x = q.x;
-        res.y = q.y;
-        res.z = fe_one();
-        return res;
-    }
     if (fe_is_zero(q.x) && fe_is_zero(q.y)) {
         return p;
     }
@@ -211,8 +173,7 @@ fn jac_add_affine(p: JacobianPoint, q: AffinePoint) -> JacobianPoint {
     let r = fe_double(fe_sub(s2, s1));
 
     if (fe_is_zero(h)) {
-        if (fe_is_zero(r)) { return jac_double(p); }
-        return jac_infinity();
+        return p;
     }
 
     let hh = fe_square(h);
