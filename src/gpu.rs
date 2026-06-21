@@ -401,31 +401,12 @@ impl GpuRunner {
             cache: None,
         });
 
-        let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-            label: Some("Search Pipeline"),
-            layout: Some(&pipeline_layout),
-            module: &search_shader,
-            entry_point: Some("main"),
-            compilation_options: wgpu::PipelineCompilationOptions::default(),
-            cache: None,
-        });
-
         let compute_jacobian_pipeline =
             device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
                 label: Some("Compute Jacobian Pipeline"),
                 layout: Some(&pipeline_layout),
                 module: &search_shader,
                 entry_point: Some("compute_jacobian"),
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-                cache: None,
-            });
-
-        let batch_normalize_hash_pipeline =
-            device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-                label: Some("Batch Normalize Hash Pipeline"),
-                layout: Some(&pipeline_layout),
-                module: &search_shader,
-                entry_point: Some("batch_normalize_hash"),
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
                 cache: None,
             });
@@ -440,7 +421,37 @@ impl GpuRunner {
                 cache: None,
             });
 
-        // P2TR pipelines use p2tr_shader (no SHA/RIPEMD, lighter for Metal)
+        #[cfg(target_os = "macos")]
+        let pipeline = init_pipeline.clone();
+
+        #[cfg(not(target_os = "macos"))]
+        let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+            label: Some("Search Pipeline"),
+            layout: Some(&pipeline_layout),
+            module: &search_shader,
+            entry_point: Some("main"),
+            compilation_options: wgpu::PipelineCompilationOptions::default(),
+            cache: None,
+        });
+
+        #[cfg(target_os = "macos")]
+        let batch_normalize_hash_pipeline = batch_normalize_btcc_match_pipeline.clone();
+
+        #[cfg(not(target_os = "macos"))]
+        let batch_normalize_hash_pipeline =
+            device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("Batch Normalize Hash Pipeline"),
+                layout: Some(&pipeline_layout),
+                module: &search_shader,
+                entry_point: Some("batch_normalize_hash"),
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
+                cache: None,
+            });
+
+        #[cfg(target_os = "macos")]
+        let compute_jacobian_p2tr_pipeline = compute_jacobian_pipeline.clone();
+
+        #[cfg(not(target_os = "macos"))]
         let compute_jacobian_p2tr_pipeline =
             device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
                 label: Some("Compute Jacobian P2TR Pipeline"),
@@ -451,6 +462,10 @@ impl GpuRunner {
                 cache: None,
             });
 
+        #[cfg(target_os = "macos")]
+        let batch_normalize_p2tr_pipeline = batch_normalize_btcc_match_pipeline.clone();
+
+        #[cfg(not(target_os = "macos"))]
         let batch_normalize_p2tr_pipeline =
             device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
                 label: Some("Batch Normalize P2TR Pipeline"),
